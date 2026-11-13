@@ -963,9 +963,11 @@ impl State {
                     url.to_string()
                 };
 
+                // Only `description`: Stremio's core treats `title` as an alias of
+                // `description`, so sending both is a duplicate-field error that
+                // makes it discard this addon's whole stream list.
                 streams.push(json!({
                     "name": format!("MovieBox\n{quality}"),
-                    "title": description,
                     "description": description,
                     "url": stream_url,
                     "subtitles": subtitles,
