@@ -29,7 +29,7 @@ What it gives Stremio:
         ▼
  Android phone/tablet at home, in Termux
    cloudflared  ──►  moviebox-stremio on http://127.0.0.1:7000  ──►  MovieBox
-   (both kept running by the `mbx` script, started on boot by Termux:Boot)
+   (both kept running by the `mbx` script, started by Termux's boot support)
 ```
 
 - Stremio only accepts **https** addon links from other devices, so a plain
@@ -65,12 +65,16 @@ rebuilds it automatically.
 
 ### Step 3 — Install the Android apps
 
-On the phone/tablet that will run the addon, install from
-[F-Droid](https://f-droid.org) (or the GitHub releases of each app):
+On the phone/tablet that will run the addon, install **Termux** from either
+Google Play or [F-Droid](https://f-droid.org). Both work.
 
-- **Termux**: required. Don't use the Google Play version; it is outdated.
-- **Termux:Boot**: optional, starts the addon automatically after a reboot.
-  **Open it once** after installing, or Android never runs it.
+To start the addon automatically after a reboot:
+
+- **Termux from Google Play** (version 2024.10.24 or newer): nothing extra
+  to install, because boot support is built in.
+- **Termux from F-Droid or GitHub:** also install **Termux:Boot** from the
+  *same* place (add-ons only work with a Termux from the same source), then
+  **open it once**, or Android never runs it.
 
 ### Step 4 — Allow Termux to save files
 
@@ -100,7 +104,7 @@ The installer sets up:
 | `moviebox-stremio` | `$PREFIX/bin/` | the addon server |
 | `cloudflared` | Termux package | the free https tunnel |
 | `mbx` | `$PREFIX/bin/` | starts both, restarts them if they crash, saves the link |
-| boot script | `~/.termux/boot/start` | runs `mbx start` when the device starts |
+| boot script | `~/.termux/boot/start` | runs `mbx start` when the device starts (needs the boot support from step 3) |
 
 If you already had a boot script, it is saved as `~/.termux/boot/start.bak`.
 
@@ -154,7 +158,7 @@ Android kills background apps to save battery. To stop that:
 
 - **Settings → Apps → Termux → Battery → Unrestricted** (wording varies by
   phone; on Xiaomi it's *Battery saver → No restrictions*, and also enable
-  **Autostart** for Termux and Termux:Boot).
+  **Autostart** for Termux, and for Termux:Boot if you use it).
 - Keep the device on charge and on Wi-Fi if it's your always-on box.
 
 `mbx start` already takes a Termux wake lock (the Termux notification shows
@@ -197,6 +201,24 @@ and `mbx.log` (starts, restarts and health checks).
 
 ---
 
+## Things not to do
+
+- **Don't share your addon link publicly.** Anyone who has it can use your
+  addon, and their video runs through your phone and home internet.
+- **Don't swipe Termux away or tap *Exit* in its notification.** That stops
+  the addon and the tunnel. Leaving Termux in the background is fine.
+- **Don't run `mbx restart` without a reason.** It gives you a new link that
+  you then have to install in Stremio again. To get a new version, use
+  `mbx update`, which keeps the link.
+- **Don't install the `http://192.168…` link** in Stremio on other devices.
+  It fails with *"Failed to fetch"*. Use the https link.
+- **Don't turn battery restrictions back on** for Termux (step 9), or
+  Android will stop the addon after a while.
+- **Don't mix Termux sources.** Termux from Google Play and add-ons from
+  F-Droid (or the other way round) don't work together.
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -207,7 +229,7 @@ and `mbx.log` (starts, restarts and health checks).
 | Stream won't play in the browser | It's probably **hevc**. Pick an **h264** stream, or use the Stremio app. |
 | Stream starts, then stops | The CDN link expired. Close the player and pick the stream again. |
 | Nothing works after the screen turns off | Step 9: battery unrestricted for Termux, and Autostart on Xiaomi phones. |
-| Nothing starts after a reboot | Open the Termux:Boot app once, then reboot. Or start it by hand: `mbx start`. |
+| Nothing starts after a reboot | Open Termux once after the reboot. On F-Droid/GitHub Termux, check Termux:Boot is installed from the same source and was opened once. Or start it by hand: `mbx start`. |
 | No link file in Download | Run `termux-setup-storage` (step 4), then `mbx restart`. |
 | Need more detail | `tail -n 50 ~/.mbx/addon.log`. For per-request logs: `mbx stop`, then `MBX_DEBUG=1 moviebox-stremio`. |
 

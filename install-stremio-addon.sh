@@ -63,12 +63,16 @@ chmod 755 "$TMP"
 mv "$TMP" "$PREFIX/bin/mbx"
 echo "Installed: $PREFIX/bin/mbx"
 
-# Termux:Boot runs this at phone start-up (if the Termux:Boot app is installed).
+# Run at device start-up: built into Termux from Google Play, or by the
+# Termux:Boot add-on for F-Droid/GitHub builds.
 BOOT="$HOME/.termux/boot/start"
 BOOT_SCRIPT='#!/data/data/com.termux/files/usr/bin/sh
-# Termux:Boot - start the MovieBox Stremio addon and its HTTPS tunnel.
+# Termux boot script - start the MovieBox Stremio addon and its HTTPS tunnel.
 termux-wake-lock
-mbx start'
+mbx start
+# Keep this script running: when a boot script exits, Termux may stop the
+# processes it started.
+while :; do sleep 3600; done'
 mkdir -p "$HOME/.termux/boot"
 if [ -f "$BOOT" ] && [ "$(cat "$BOOT")" != "$BOOT_SCRIPT" ]; then
     cp "$BOOT" "$BOOT.bak"

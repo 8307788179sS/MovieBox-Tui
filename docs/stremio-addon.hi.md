@@ -30,7 +30,7 @@ Stremio में आपको क्या मिलेगा:
         ▼
  घर पर रखा Android फ़ोन/टैबलेट, Termux में
    cloudflared  ──►  moviebox-stremio (http://127.0.0.1:7000)  ──►  MovieBox
-   (दोनों को `mbx` script चलाए रखती है, Termux:Boot इसे फ़ोन चालू होते ही शुरू करता है)
+   (दोनों को `mbx` script चलाए रखती है, Termux का boot support इसे फ़ोन चालू होते ही शुरू करता है)
 ```
 
 - दूसरे डिवाइस से Stremio सिर्फ़ **https** वाला addon लिंक मानता है। सादा
@@ -67,13 +67,16 @@ GitHub पर यह repository खोलें और **Fork** दबाएँ�
 
 ### स्टेप 3: Android ऐप्स इंस्टॉल करें
 
-जिस फ़ोन/टैबलेट पर addon चलाना है, उस पर [F-Droid](https://f-droid.org) से
-(या हर ऐप की GitHub release से) इंस्टॉल करें:
+जिस फ़ोन/टैबलेट पर addon चलाना है, उस पर **Termux** इंस्टॉल करें: Google Play
+से या [F-Droid](https://f-droid.org) से, दोनों चलते हैं।
 
-- **Termux**: ज़रूरी है। Google Play वाला Termux न लें, वह पुराना है।
-- **Termux:Boot**: वैकल्पिक है, फ़ोन restart होने पर addon अपने-आप चालू
-  करता है। इंस्टॉल करने के बाद इसे **एक बार खोलें**, वरना Android इसे कभी
-  नहीं चलाता।
+Restart के बाद addon अपने-आप चालू हो, इसके लिए:
+
+- **Google Play वाला Termux** (version 2024.10.24 या नया): कुछ और इंस्टॉल
+  नहीं करना, boot support इसमें पहले से है।
+- **F-Droid या GitHub वाला Termux:** **Termux:Boot** भी *उसी जगह* से इंस्टॉल
+  करें (add-on सिर्फ़ उसी source के Termux के साथ चलते हैं), फिर उसे **एक बार
+  खोलें**, वरना Android इसे कभी नहीं चलाता।
 
 ### स्टेप 4: Termux को files सेव करने की permission दें
 
@@ -103,7 +106,7 @@ Installer ये सब इंस्टॉल करता है:
 | `moviebox-stremio` | `$PREFIX/bin/` | addon server |
 | `cloudflared` | Termux package | मुफ़्त https tunnel |
 | `mbx` | `$PREFIX/bin/` | दोनों को चलाता है, बंद होने पर फिर से चालू करता है, लिंक सेव करता है |
-| boot script | `~/.termux/boot/start` | डिवाइस चालू होते ही `mbx start` चलाता है |
+| boot script | `~/.termux/boot/start` | डिवाइस चालू होते ही `mbx start` चलाता है (स्टेप 3 वाला boot support चाहिए) |
 
 अगर पहले से कोई boot script थी, तो वह `~/.termux/boot/start.bak` नाम से
 सेव हो जाती है।
@@ -158,7 +161,7 @@ Android बैटरी बचाने के लिए background ऐप्स
 
 - **Settings → Apps → Termux → Battery → Unrestricted** (हर फ़ोन में नाम थोड़ा
   अलग हो सकता है; Xiaomi में *Battery saver → No restrictions*, और Termux व
-  Termux:Boot के लिए **Autostart** भी चालू करें)।
+  अगर Termux:Boot इस्तेमाल करते हैं तो उसके लिए भी **Autostart** चालू करें)।
 - अगर यही आपका हमेशा चालू रहने वाला डिवाइस है, तो उसे चार्जिंग पर और Wi-Fi
   से जुड़ा रखें।
 
@@ -202,6 +205,26 @@ Logs `~/.mbx/` में हैं: `addon.log` (addon), `tunnel.log` (cloudflar
 
 ---
 
+## क्या नहीं करना है
+
+- **अपना addon लिंक सबके साथ share न करें।** जिसके पास लिंक होगा, वह आपका
+  addon इस्तेमाल कर सकता है, और उसका वीडियो आपके फ़ोन और घर के इंटरनेट से
+  होकर जाएगा।
+- **Termux को swipe करके बंद न करें, और उसके notification में *Exit* न
+  दबाएँ।** इससे addon और tunnel बंद हो जाते हैं। Termux को background में
+  छोड़ना ठीक है।
+- **बिना वजह `mbx restart` न चलाएँ।** इससे नया लिंक बनता है, जिसे Stremio में
+  फिर से डालना पड़ता है। नया version लेने के लिए `mbx update` चलाएँ, उसमें
+  लिंक वही रहता है।
+- **दूसरे डिवाइस के Stremio में `http://192.168…` वाला लिंक न डालें।** उस पर
+  *"Failed to fetch"* आता है। https वाला लिंक डालें।
+- **Termux के लिए बैटरी restriction फिर से चालू न करें** (स्टेप 9), वरना
+  Android कुछ देर बाद addon बंद कर देगा।
+- **अलग-अलग source का Termux न मिलाएँ।** Google Play वाला Termux और F-Droid
+  वाले add-on (या उल्टा) साथ में नहीं चलते।
+
+---
+
 ## समस्या और हल
 
 | समस्या | हल |
@@ -212,7 +235,7 @@ Logs `~/.mbx/` में हैं: `addon.log` (addon), `tunnel.log` (cloudflar
 | ब्राउज़र में stream नहीं चलती | शायद वह **hevc** है। **h264** वाली stream चुनें, या Stremio ऐप इस्तेमाल करें। |
 | Stream चलकर रुक जाती है | CDN लिंक expire हो गया। Player बंद करके stream फिर से चुनें। |
 | Screen बंद होने पर सब रुक जाता है | स्टेप 9: Termux के लिए बैटरी unrestricted करें, और Xiaomi फ़ोन पर Autostart चालू करें। |
-| Restart के बाद कुछ चालू नहीं होता | Termux:Boot ऐप एक बार खोलें, फिर restart करें। या हाथ से चालू करें: `mbx start`। |
+| Restart के बाद कुछ चालू नहीं होता | Restart के बाद Termux एक बार खोलें। F-Droid/GitHub वाले Termux पर देखें कि Termux:Boot उसी source से इंस्टॉल है और एक बार खोला गया है। या हाथ से चालू करें: `mbx start`। |
 | Download में लिंक वाली फ़ाइल नहीं | `termux-setup-storage` चलाएँ (स्टेप 4), फिर `mbx restart`। |
 | ज़्यादा जानकारी चाहिए | `tail -n 50 ~/.mbx/addon.log`। हर request का log देखने के लिए: `mbx stop`, फिर `MBX_DEBUG=1 moviebox-stremio`। |
 
