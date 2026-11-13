@@ -131,6 +131,7 @@ Full documentation at [**mesamirh.github.io/MovieBox-Tui**](https://mesamirh.git
 | [Configuration](docs/config.md) | Settings, themes, and environment variables |
 | [Content Providers](docs/providers.md) | Native scrapers (MovieBox, 4KHDHub, Dramachi, BDIX) |
 | [Stremio Addons](docs/addons-mode.md) | Community addon configuration and streaming |
+| [MovieBox in Stremio](docs/stremio-addon.md) | Run MovieBox as a Stremio addon from Termux (phone & Android TV) |
 | [Hardware Players](docs/players.md) | Player detection, launch options, and flags |
 | [Live TV & IPTV](docs/tv-mode.md) | M3U playlist import and channel streaming |
 | [Batch Downloads](docs/downloads.md) | HTTP range engine, pause, and resume |

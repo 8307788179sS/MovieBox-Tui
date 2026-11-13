@@ -1,0 +1,110 @@
+name: Stremio addon
+
+# Builds the `moviebox-stremio` addon server and publishes the binaries to a
+# rolling GitHub release named `stremio-addon`, so Termux can download them.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/stremio-addon.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.asset }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Termux on 64-bit Android phones / TVs (most devices)
+          - target: aarch64-linux-android
+            clang: aarch64-linux-android24-clang
+            asset: moviebox-stremio-android-arm64
+          # Termux on 32-bit Android TVs / Fire TV sticks
+          - target: armv7-linux-androideabi
+            clang: armv7a-linux-androideabi24-clang
+            asset: moviebox-stremio-android-armv7
+          # PC / VPS
+          - target: x86_64-unknown-linux-gnu
+            clang: ""
+            asset: moviebox-stremio-linux-x86_64
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.90.0
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          prefix-key: "stremio-addon-${{ matrix.target }}"
+
+      - name: Setup Android NDK
+        if: matrix.clang != ''
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r26d
+          add-to-path: false
+
+      - name: Build
+        shell: bash
+        run: |
+          TARGET="${{ matrix.target }}"
+          if [ -n "${{ matrix.clang }}" ]; then
+            TOOLCHAIN="${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+            export PATH="$TOOLCHAIN:$PATH"
+            UPPER=$(echo "$TARGET" | tr 'a-z-' 'A-Z_')
+            LOWER=$(echo "$TARGET" | tr '-' '_')
+            export "CARGO_TARGET_${UPPER}_LINKER=$TOOLCHAIN/${{ matrix.clang }}"
+            export "CC_${LOWER}=$TOOLCHAIN/${{ matrix.clang }}"
+            export "AR_${LOWER}=$TOOLCHAIN/llvm-ar"
+          fi
+          cargo build --release --locked --bin moviebox-stremio --target "$TARGET"
+          mkdir -p dist
+          cp "target/$TARGET/release/moviebox-stremio" "dist/${{ matrix.asset }}"
+
+      - name: Unit tests (host only)
+        if: matrix.target == 'x86_64-unknown-linux-gnu'
+        run: cargo test --locked --bin moviebox-stremio
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+
+  publish:
+    name: Publish rolling release
+    needs: build
+    if: always() && needs.build.result != 'cancelled'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Upload to the stremio-addon release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          ls -la artifacts
+          if ! gh release view stremio-addon --repo "$REPO" >/dev/null 2>&1; then
+            gh release create stremio-addon --repo "$REPO" --prerelease \
+              --title "MovieBox Stremio addon (rolling build)" \
+              --notes "Binaries of moviebox-stremio, rebuilt on every push. See docs/stremio-addon.md."
+          fi
+          gh release upload stremio-addon artifacts/* --repo "$REPO" --clobber
