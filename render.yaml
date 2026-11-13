@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: moviebox-stremio
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /manifest.json
+    autoDeploy: true
