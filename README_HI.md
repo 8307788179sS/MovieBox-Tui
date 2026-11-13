@@ -136,6 +136,7 @@ moviebox-tui
 | [कॉन्फ़िगरेशन](docs/config.md) | सेटिंग्स, थीम कस्टमाइज़ेशन और कॉन्फ़िगरेशन विकल्प |
 | [कंटेंट प्रोवाइडर्स](docs/providers.md) | नेटिव स्क्रेपर्स (MovieBox, 4KHDHub, Dramachi, BDIX) |
 | [Stremio ऐड-ऑन्स](docs/addons-mode.md) | कम्युनिटी ऐड-ऑन इंस्टॉलेशन, मैनिफेस्ट URL और स्ट्रीम रेजोल्यूशन |
+| [Stremio में MovieBox](docs/stremio-addon.hi.md) | Termux से MovieBox को Stremio addon की तरह चलाना (फ़ोन और Android TV), स्टेप-बाय-स्टेप |
 | [हार्डवेयर प्लेयर्स](docs/players.md) | प्लेयर डिटेक्शन, लॉन्च ऑप्शंस और हार्डवेयर एक्सेलेरेशन |
 | [लाइव टीवी और IPTV](docs/tv-mode.md) | M3U प्लेलिस्ट इम्पोर्ट, चैनल सर्च और लाइव स्ट्रीमिंग |
 | [बैच डाउनलोड](docs/downloads.md) | पॉज और रिज्यूम के साथ मल्टी-सेगमेंट HTTP रेंज डाउनलोड |

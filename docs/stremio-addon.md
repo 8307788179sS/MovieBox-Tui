@@ -1,5 +1,7 @@
 # MovieBox in Stremio (`moviebox-stremio`)
 
+**English** • [हिन्दी](stremio-addon.hi.md)
+
 `moviebox-stremio` is a second program in this repo. It runs MovieBox-TUI's
 MovieBox provider as a **Stremio addon** on your own Android phone or tablet,
 so you can watch MovieBox titles inside Stremio on your phone, Android TV, PC
