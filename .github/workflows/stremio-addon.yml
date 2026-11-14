@@ -105,6 +105,6 @@ jobs:
           if ! gh release view stremio-addon --repo "$REPO" >/dev/null 2>&1; then
             gh release create stremio-addon --repo "$REPO" --prerelease \
               --title "MovieBox Stremio addon (rolling build)" \
-              --notes "Binaries of moviebox-stremio, rebuilt on every push. See docs/stremio-addon.md."
+              --notes "Binaries of moviebox-stremio, rebuilt on every push."
           fi
           gh release upload stremio-addon artifacts/* --repo "$REPO" --clobber

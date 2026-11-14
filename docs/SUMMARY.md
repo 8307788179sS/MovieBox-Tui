@@ -14,8 +14,6 @@
 - [Hardware Players](players.md)
 - [Batch Downloads](downloads.md)
 - [Stremio Addons](addons-mode.md)
-- [MovieBox in Stremio](stremio-addon.md)
-  - [हिन्दी गाइड](stremio-addon.hi.md)
 - [Live TV & IPTV](tv-mode.md)
 
 # Architecture & Internals
