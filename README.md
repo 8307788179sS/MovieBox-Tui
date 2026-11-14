@@ -123,17 +123,9 @@ moviebox-tui
 
 ## Documentation
 
-Full documentation at [**mesamirh.github.io/MovieBox-Tui**](https://mesamirh.github.io/MovieBox-Tui/) or [`docs/`](docs/):
-
 | Guide | Description |
 | :--- | :--- |
-| [Keyboard & Controls](docs/controls.md) | Keybindings, vim navigation, and shortcuts |
-| [Configuration](docs/config.md) | Settings, themes, and environment variables |
-| [Content Providers](docs/providers.md) | Native scrapers (MovieBox, 4KHDHub, Dramachi, BDIX) |
-| [Stremio Addons](docs/addons-mode.md) | Community addon configuration and streaming |
-| [Hardware Players](docs/players.md) | Player detection, launch options, and flags |
-| [Live TV & IPTV](docs/tv-mode.md) | M3U playlist import and channel streaming |
-| [Batch Downloads](docs/downloads.md) | HTTP range engine, pause, and resume |
+| [MovieBox in Stremio](docs/stremio-wifi-guide.md) | Run MovieBox as a Stremio addon on Android (Termux), home WiFi, 10 steps with screenshots |
 
 ## Contributing
 

@@ -128,17 +128,9 @@ moviebox-tui
 
 ## डॉक्यूमेंटेशन
 
-विस्तृत गाइड और आर्किटेक्चर संदर्भ [**mesamirh.github.io/MovieBox-Tui**](https://mesamirh.github.io/MovieBox-Tui/) पर या [`docs/`](docs/) डायरेक्टरी में उपलब्ध हैं:
-
 | गाइड | विवरण |
 | :--- | :--- |
-| [कीबोर्ड और कंट्रोल्स](docs/controls.md) | कीबाइंडिंग्स, vim नेविगेशन, सर्च और शॉर्टकट्स |
-| [कॉन्फ़िगरेशन](docs/config.md) | सेटिंग्स, थीम कस्टमाइज़ेशन और कॉन्फ़िगरेशन विकल्प |
-| [कंटेंट प्रोवाइडर्स](docs/providers.md) | नेटिव स्क्रेपर्स (MovieBox, 4KHDHub, Dramachi, BDIX) |
-| [Stremio ऐड-ऑन्स](docs/addons-mode.md) | कम्युनिटी ऐड-ऑन इंस्टॉलेशन, मैनिफेस्ट URL और स्ट्रीम रेजोल्यूशन |
-| [हार्डवेयर प्लेयर्स](docs/players.md) | प्लेयर डिटेक्शन, लॉन्च ऑप्शंस और हार्डवेयर एक्सेलेरेशन |
-| [लाइव टीवी और IPTV](docs/tv-mode.md) | M3U प्लेलिस्ट इम्पोर्ट, चैनल सर्च और लाइव स्ट्रीमिंग |
-| [बैच डाउनलोड](docs/downloads.md) | पॉज और रिज्यूम के साथ मल्टी-सेगमेंट HTTP रेंज डाउनलोड |
+| [Stremio में MovieBox](docs/stremio-wifi-guide.md) | Android (Termux) पर MovieBox को Stremio addon की तरह चलाना, घर के WiFi पर, 10 स्टेप screenshots के साथ |
 
 ## योगदान
 
