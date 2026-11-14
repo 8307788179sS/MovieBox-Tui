@@ -108,3 +108,18 @@ jobs:
               --notes "Binaries of moviebox-stremio, rebuilt on every push."
           fi
           gh release upload stremio-addon artifacts/* --repo "$REPO" --clobber
+          cat > notes.md <<EOF
+          Binaries of moviebox-stremio, rebuilt on every push.
+
+          ## Setup guide (10 steps, with screenshots)
+          https://github.com/$REPO/blob/main/docs/stremio-wifi-guide.md
+
+          Android (Play Store Termux) par addon chala ke ghar ke WiFi par Stremio mein MovieBox dekhein.
+
+          | File | Device |
+          |---|---|
+          | moviebox-stremio-android-arm64 | Zyada tar phone/tablet/TV (64-bit) |
+          | moviebox-stremio-android-armv7 | Purane TV/stick (32-bit) |
+          | moviebox-stremio-linux-x86_64 | Linux PC |
+          EOF
+          gh release edit stremio-addon --repo "$REPO" --notes-file notes.md
