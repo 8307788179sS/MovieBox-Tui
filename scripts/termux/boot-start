@@ -1,0 +1,6 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# Termux:Boot - start the MovieBox Stremio addon on the home WiFi.
+termux-wake-lock
+mbx start
+# Keep this script running so Termux does not stop the addon.
+while :; do sleep 3600; done

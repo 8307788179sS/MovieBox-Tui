@@ -1,0 +1,94 @@
+#!/data/data/com.termux/files/usr/bin/sh
+# mbx - keep the MovieBox Stremio addon running on the home WiFi (no tunnel).
+#
+#   mbx start     start the addon in the background (restarts any old copy)
+#   mbx stop      stop it
+#   mbx restart   stop, then start
+#   mbx status    show whether it is running and the current link
+#   mbx link      print the Stremio addon links
+#   mbx update    download the newest addon build and restart it
+#
+# Same tablet:          http://127.0.0.1:7000/manifest.json
+# Other WiFi devices:   http://<tablet WiFi IP>:7000/manifest.json
+# The links are also written to /sdcard/Download/moviebox-stremio-link.txt
+
+PORT=7000
+DIR="$HOME/.mbx"
+LINK_FILE=/sdcard/Download/moviebox-stremio-link.txt
+SELF="$PREFIX/bin/mbx"
+mkdir -p "$DIR"
+
+log() { echo "$(date '+%F %T') $*" >>"$DIR/mbx.log"; }
+
+# Keep logs from growing forever.
+trim() { [ -f "$1" ] && [ "$(wc -c <"$1")" -gt 2000000 ] && tail -n 2000 "$1" >"$1.tmp" && mv "$1.tmp" "$1"; }
+
+lan_ip() {
+	grep -aoE 'Other devices: +http://[0-9.]+' "$DIR/addon.log" 2>/dev/null | tail -n 1 | grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
+}
+
+links() {
+	echo "Same tablet:  http://127.0.0.1:$PORT/manifest.json"
+	ip=$(lan_ip)
+	[ -n "$ip" ] && echo "WiFi devices: http://$ip:$PORT/manifest.json"
+}
+
+addon_loop() {
+	while :; do
+		trim "$DIR/addon.log"
+		trim "$DIR/mbx.log"
+		log "addon: starting"
+		moviebox-stremio >>"$DIR/addon.log" 2>&1 &
+		pid=$!
+		sleep 5
+		links >"$DIR/link"
+		cp "$DIR/link" "$LINK_FILE" 2>/dev/null
+		wait $pid 2>/dev/null
+		log "addon: exited, restarting in 3s"
+		sleep 3
+	done
+}
+
+stop_all() {
+	pkill -f "mbx _addon" 2>/dev/null
+	pkill -f "mbx _tunnel" 2>/dev/null
+	pkill -x moviebox-stremio 2>/dev/null
+	pkill -x cloudflared 2>/dev/null
+	sleep 1
+}
+
+case "$1" in
+	_addon) addon_loop ;;
+	start)
+		stop_all
+		termux-wake-lock 2>/dev/null
+		nohup sh "$SELF" _addon >/dev/null 2>&1 &
+		sleep 6
+		links
+		;;
+	stop)
+		stop_all
+		echo "stopped" >"$LINK_FILE" 2>/dev/null
+		echo "Stopped."
+		;;
+	restart) "$SELF" start ;;
+	status)
+		pgrep -x moviebox-stremio >/dev/null && echo "addon: running" || echo "addon: NOT running"
+		links
+		;;
+	link) links ;;
+	update)
+		repo=$(cat "$DIR/repo" 2>/dev/null)
+		[ -z "$repo" ] && repo=8307788179sS/MovieBox-Tui
+		case "$(uname -m)" in
+			aarch64|arm64) asset=moviebox-stremio-android-arm64 ;;
+			*) asset=moviebox-stremio-android-armv7 ;;
+		esac
+		tmp="$PREFIX/tmp/mbx-new"
+		curl -fL --progress-bar "https://github.com/$repo/releases/download/stremio-addon/$asset" -o "$tmp" || exit 1
+		chmod +x "$tmp" && mv "$tmp" "$PREFIX/bin/moviebox-stremio"
+		pkill -x moviebox-stremio 2>/dev/null
+		echo "Updated. The addon restarts by itself in a few seconds."
+		;;
+	*) sed -n '2,13p' "$SELF" | sed 's/^# \{0,1\}//' ;;
+esac
