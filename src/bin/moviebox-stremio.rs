@@ -101,6 +101,9 @@ struct State {
     lists: Mutex<HashMap<String, PagedList>>,
     details: Mutex<HashMap<String, (Instant, MediaDetails)>>,
     imdb: Mutex<HashMap<String, String>>,
+    /// Same keys as `imdb`: whether Cinemeta lists India as a country, so the
+    /// title's "Original Audio" is most likely Hindi.
+    indian: Mutex<HashMap<String, bool>>,
 }
 
 struct Request {
@@ -208,6 +211,7 @@ async fn main() {
         lists: Mutex::new(HashMap::new()),
         details: Mutex::new(HashMap::new()),
         imdb: Mutex::new(HashMap::new()),
+        indian: Mutex::new(HashMap::new()),
     });
 
     println!(
@@ -754,6 +758,17 @@ impl State {
             .or_else(|| meta.get("releaseInfo"))
             .and_then(Value::as_str)
             .and_then(first_year);
+        let indian = meta
+            .get("country")
+            .and_then(Value::as_str)
+            .is_some_and(|c| c.to_lowercase().contains("india"));
+        {
+            let mut map = lock(&self.indian);
+            if map.len() > MAX_DETAIL_KEYS {
+                map.clear();
+            }
+            map.insert(cache_key.clone(), indian);
+        }
 
         let mut best: Option<(i32, String)> = None;
         for page in 1..=2 {
@@ -868,8 +883,22 @@ impl State {
             Err(_) => Vec::new(),
         };
 
+        // Was this title made in India? Then its "Original Audio" is most likely Hindi.
+        let indian_original = id.starts_with("tt")
+            && lock(&self.indian)
+                .get(&format!(
+                    "{}:{}",
+                    type_str(media_type),
+                    id.split(':').next().unwrap_or(id)
+                ))
+                .copied()
+                .unwrap_or(false);
+
         let ua = self.svc.client.user_agent().to_string();
         let default_headers = vec![("User-Agent".to_string(), ua)];
+        // English subtitles first, so the player's first pick is English.
+        let mut captions = captions;
+        captions.sort_by_key(|s| u8::from(stremio_lang(&s.name) != "eng"));
         let subtitles: Vec<Value> = captions
             .iter()
             .enumerate()
@@ -966,15 +995,21 @@ impl State {
                 // Only `description`: Stremio's core treats `title` as an alias of
                 // `description`, so sending both is a duplicate-field error that
                 // makes it discard this addon's whole stream list.
-                streams.push(json!({
-                    "name": format!("MovieBox\n{quality}"),
-                    "description": description,
-                    "url": stream_url,
-                    "subtitles": subtitles,
-                    "behaviorHints": hints,
-                }));
+                streams.push((
+                    audio_rank(&language, indian_original),
+                    json!({
+                        "name": format!("MovieBox\n{quality}"),
+                        "description": description,
+                        "url": stream_url,
+                        "subtitles": subtitles,
+                        "behaviorHints": hints,
+                    }),
+                ));
             }
         }
+        // Hindi audio first, then English; the order within a language is kept.
+        streams.sort_by_key(|(rank, _)| *rank);
+        let streams: Vec<Value> = streams.into_iter().map(|(_, s)| s).collect();
 
         if streams.is_empty() {
             eprintln!("no playable streams for {id}");
@@ -1277,6 +1312,21 @@ async fn fetch_chunked(
 // Small text helpers
 // ---------------------------------------------------------------------------
 
+/// Stream order by audio: Hindi, then an Indian title's original audio (most
+/// likely Hindi), then English, then any other original audio, then the rest.
+fn audio_rank(language: &str, indian_original: bool) -> u8 {
+    let l = language.trim().to_lowercase();
+    if l.contains("hindi") || l == "hin" || l == "hi" {
+        0
+    } else if l.contains("english") || l == "eng" || l == "en" {
+        2
+    } else if l.is_empty() || l.contains("original") || l == "unknown" {
+        if indian_original { 1 } else { 3 }
+    } else {
+        4
+    }
+}
+
 fn dub_label(dub: &AudioTrackOption) -> String {
     let lang = dub.language.trim();
     if !lang.is_empty() && !lang.eq_ignore_ascii_case("unknown") {
@@ -1416,6 +1466,18 @@ fn stremio_lang(name: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn hindi_audio_comes_first_then_english() {
+        // A Hollywood film: Hindi dub, then English, then the rest.
+        assert!(audio_rank("Hindi", false) < audio_rank("English", false));
+        assert!(audio_rank("English", false) < audio_rank("Original Audio", false));
+        assert!(audio_rank("Original Audio", false) < audio_rank("Tamil", false));
+        // An Indian film: its original audio (Hindi) beats an English dub.
+        assert!(audio_rank("Original Audio", true) < audio_rank("English", true));
+        assert!(audio_rank("Hindi", true) < audio_rank("Original Audio", true));
+        assert_eq!(audio_rank("", true), audio_rank("Original Audio", true));
+    }
 
     #[test]
     fn year_parsing() {
