@@ -399,6 +399,13 @@ async fn handle_conn(socket: TcpStream, st: &State) -> std::io::Result<()> {
             let v = st.streams(ty, &id, &base).await;
             send_json(&mut w, &v).await
         }
+        // Not part of Stremio: which audio dubs MovieBox has for a title, so a
+        // launcher can list only the titles that really have a Hindi dub.
+        ["dubs", ty, id] => {
+            let id = decode_segment(strip_json(id));
+            let v = st.dubs(ty, &id).await;
+            send_json(&mut w, &v).await
+        }
         _ => send(&mut w, 404, "text/plain", b"not found", &[]).await,
     }
 }
@@ -802,6 +809,32 @@ impl State {
         }
         map.insert(cache_key, subject.clone());
         Some(subject)
+    }
+
+    /// The audio versions MovieBox has for a title (`tt…` or `mbx…` id).
+    /// `found` is false when the title is not on MovieBox or the lookup failed,
+    /// so the caller may ask again later.
+    async fn dubs(&self, ty: &str, id: &str) -> Value {
+        let media_type = parse_type(ty).unwrap_or(MediaType::Movie);
+        let Some((subject, _, _)) = self.resolve_id(media_type, id).await else {
+            return json!({ "found": false, "hindi": false, "languages": [] });
+        };
+        match self.details(&subject).await {
+            Ok(d) => {
+                let languages: Vec<String> = d
+                    .dubs
+                    .iter()
+                    .map(dub_label)
+                    .filter(|l| !l.is_empty())
+                    .collect();
+                let hindi = languages.iter().any(|l| audio_rank(l, false) == 0);
+                json!({ "found": true, "hindi": hindi, "languages": languages })
+            }
+            Err(err) => {
+                eprintln!("dubs for {id}: {err}");
+                json!({ "found": false, "hindi": false, "languages": [] })
+            }
+        }
     }
 
     async fn streams(&self, ty: &str, id: &str, base: &str) -> Value {
